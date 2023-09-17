@@ -1,13 +1,13 @@
 import argparse
-from test_framework import exec_test_suite, verify_preconditions
+from test_framework import TestFramework
 from test_compiler import compile_specs, compile_preconditions
 import os, json
-from plugins import dpp_health, test_framework_health, kafka_consumer_health
+from plugins import dpp_health, test_framework_health, kafka_consumer_health, dpp_blocked_status, kafka_block_user, kafka_unblock_user
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--username', type=str, required=True)
-    parser.add_argument('--password', type=str, required=True)
+    parser.add_argument('--usernamedpp', type=str, required=True)
+    parser.add_argument('--passworddpp', type=str, required=True)
     parser.add_argument('--hostdpp', type=str, required=True)
     parser.add_argument('--hostkafka', type=str, required=True)
     parser.add_argument('--hostbroker', type=str, required=True)
@@ -17,10 +17,10 @@ def parse_args():
 
 
 def get_configs(args):
-    return {k: getattr(args, k) for k in ("username", "password", "hostdpp", "hostkafka", "hostbroker", "specs")}
+    return {k: getattr(args, k) for k in ("usernamedpp", "passworddpp", "hostdpp", "hostkafka", "hostbroker", "specs")}
 
 
-def load_files(path):
+def load_specs(path):
     specs = {}
     if "_spec.json" in path:
         directory = "/".join(path.split("/")[:-1])
@@ -48,21 +48,30 @@ def load_files(path):
     return specs
 
 
+def load_plugins(config):
+    return [
+        dpp_health.DppHealth(config),
+        test_framework_health.TestFrameworkHealth(config),
+        kafka_consumer_health.KafkaConsumerHealth(config),
+        dpp_blocked_status.DppBlockedStatus(config),
+        kafka_block_user.BlockUser(config),
+        kafka_unblock_user.UnblockUser(config)
+    ]
+
+
 if __name__ == "__main__":
     args = parse_args()
 
     config = get_configs(args)
 
     config["urlbroker"] = config["hostbroker"]
-    config["urldpp"] = config["hostdpp"] + "/dpp/dppsettings/public/v3/blockedusers"
-    config["urldpphealth"] = config["hostdpp"] + "/dpp/status/v1/health"
-    config["urlkafka"] = config["hostkafka"] + "/health"
 
-    specs = load_files(config["specs"])
+    specs = load_specs(config["specs"])
+    plugins = load_plugins(config)
 
-    dpp = dpp_health.DppHealth(config)
-    testApi = test_framework_health.TestFrameworkHealth(config)
-    kafkaConsumer = kafka_consumer_health.KafkaConsumerHealth(config)
+    framework = TestFramework(plugins, config)
 
-    verify_preconditions(compile_preconditions(specs["preconditions"], config), [dpp, testApi, kafkaConsumer])
-    exec_test_suite(compile_specs(specs["execution"], config))
+    if "preconditions" in specs:
+        framework.verify_preconditions(compile_preconditions(specs["preconditions"], config))
+
+    framework.exec_test_suite(compile_specs(specs["execution"], config))

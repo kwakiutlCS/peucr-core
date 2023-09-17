@@ -1,12 +1,18 @@
 {
     "name": "Block stream not closed by failure",
     "actions":[
-        { "action": "BLOCK", "body": "invalid" },
-        { "action": "BLOCK", "gcid": "1ead32ab-1529-4b08-a04b-5760ed66f2c2" }
+        { 
+            "action": "BLOCK",
+            "options": {"body": "invalid"}
+        },
+        {
+            "action": "BLOCK",
+            "options": {"gcid": "1ead32ab-1529-4b08-a04b-5760ed66f2c2"}
+        }
     ],
     "validation": {
         "target": "DPP-BLOCKED",
-        "gcid": "1ead32ab-1529-4b08-a04b-5760ed66f2c2",
+        "options": {"gcid": "1ead32ab-1529-4b08-a04b-5760ed66f2c2"},
         "expectation": {"field": "status", "value": "BLOCKED"}
     }
 }

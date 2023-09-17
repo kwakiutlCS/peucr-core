@@ -1,7 +1,10 @@
 {
     "name": "Block user with missing gcid",
     "actions": [
-        { "action": "BLOCK", "body": "{\"AccountDeletion\":{\"gcid\": \"\", \"event-id\":\"palerma\"}}" }
+        { 
+            "action": "BLOCK", 
+            "options": {"body": "{\"AccountDeletion\":{\"gcid\": \"\"}}"}
+        }
     ],
     "validation": {
         "target": "DPP-KAFKA-CONSUMER",

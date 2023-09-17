@@ -9,10 +9,12 @@ class DppHealth:
         self.host = config["hostdpp"] if config["hostdpp"][-1] != "/" else config["hostdpp"][:-1] 
 
 
-    def apply(self):
+    def apply(self, options = {}):
         url = self.host + "/dpp/status/v1/health"
 
-        return requests.get(url)
+        response = requests.get(url)
+
+        return {"status-code": response.status_code}
 
 
     def executes(self, label):

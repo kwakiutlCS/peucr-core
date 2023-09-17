@@ -1,7 +1,10 @@
 {
     "name": "Block user with invalid gcid",
     "actions": [
-        { "action": "BLOCK", "body": "{\"AccountDeletion\":{\"gcid\": \"invalid\"}}" }
+        { 
+            "action": "BLOCK", 
+            "options": {"body": "{\"AccountDeletion\":{\"gcid\": \"invalid\"}}"}
+        }
     ],
     "validation": {
         "target": "DPP-KAFKA-CONSUMER",

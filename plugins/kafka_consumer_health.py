@@ -9,12 +9,13 @@ class KafkaConsumerHealth:
         self.host = config["hostkafka"] if config["hostkafka"][-1] != "/" else config["hostkafka"][:-1] 
 
 
-    def apply(self):
+    def apply(self, options = {}):
         url = self.host + "/health"
 
-        return requests.get(url)
+        response = requests.get(url)
+
+        return {"status-code": response.status_code}
 
 
     def executes(self, label):
         return label in ["DPP-KAFKA-CONSUMER", "dpp-kafka-consumer",  "KAFKA-CONSUMER", "kafka-consumer"]
-

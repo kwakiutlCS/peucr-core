@@ -1,7 +1,10 @@
 {
     "name": "Block user with invalid account deletion",
     "actions": [
-        { "action": "BLOCK", "body": "{\"AccountDeletion\":{\"invalid message\"}}" }
+        { 
+            "action": "BLOCK",
+            "options": {"body": "{\"AccountDeletion\":{\"invalid message\"}}"}
+        }
     ],
     "validation": {
         "target": "DPP-KAFKA-CONSUMER",

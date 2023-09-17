@@ -1,38 +1,9 @@
-def compile_body(action):
-    if action.get("body") is not None:
-        return { "content": action["body"] }
-        
-    if action["action"] == "UNBLOCK" and action.get("gcid") is not None:
-        return {
-            "content":"{\"AccountActivation\":{\"gcid\":\"" + action["gcid"] + "\"}}"        
-        }
-
-    if action["action"] == "BLOCK" and action.get("gcid") is not None:
-        return {
-            "content":"{\"AccountDeletion\":{\"gcid\":\"" + action["gcid"] + "\"}}"        
-        }
-
-
-def compile_action(action, config):
-    return {"url": config["urlbroker"] + ("/blockUser" if action["action"] == "BLOCK" else "/unblockUser"),
-            "body": compile_body(action)}
-
-
 def compile_actions(actions, config):
-    return [compile_action(action, config) for action in actions]
+    return actions
 
 
 def compile_validation(validation, config):
-    target = None
-    if validation["target"] == "DPP-BLOCKED":
-        target = {"url": config["urldpp"],
-                  "username": config["username"],
-                  "password": config["password"],
-                  "headers": {"X-rgw-gcid": validation["gcid"],
-                              "accept": "application/json"}
-                  }
-        
-    compiled = {"target": target, "name": validation["target"], "fields": []}
+    compiled = {"name": validation["target"], "fields": []}
 
     expectations = validation["expectation"]
 
@@ -48,11 +19,14 @@ def compile_validation(validation, config):
         compiled["wait"] = validation["wait"]
         compiled["duration"] = 1
 
+    if validation.get("options"):
+        compiled["options"] = validation["options"]
+
     return compiled
 
 
 def compile_spec(spec, config):
-    return {"name": spec["name"], "actions": compile_actions(spec["actions"], config), "validation": compile_validation(spec["validation"], config)}
+    return {"name": spec["name"], "actions": spec["actions"], "validation": compile_validation(spec["validation"], config)}
 
 
 def compile_specs(specs, config):

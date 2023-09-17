@@ -1,12 +1,18 @@
 {
     "name": "Unblock stream not closed by failure",
     "actions":[
-        { "action": "UNBLOCK", "body": "1ead32ab-1529-4b08-a04b-5760ed66f2cX" },
-        { "action": "UNBLOCK", "gcid": "1ead32ab-1529-4b08-a04b-5760ed66f2c2" }
+        { 
+            "action": "UNBLOCK",
+            "options": {"body": "invalid"}
+        },
+        {
+            "action": "UNBLOCK",
+            "options": {"gcid": "1ead32ab-1529-4b08-a04b-5760ed66f2c2"}
+        }
     ],
     "validation": {
         "target": "DPP-BLOCKED",
-        "gcid": "1ead32ab-1529-4b08-a04b-5760ed66f2c2",
+        "options": {"gcid": "1ead32ab-1529-4b08-a04b-5760ed66f2c2"},
         "expectation": {
             "one-of": [
                 {"field": "status", "value": "NOT_BLOCKED"},

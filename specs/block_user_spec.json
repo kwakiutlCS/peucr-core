@@ -1,11 +1,14 @@
 {
     "name": "Block user",
     "actions":[
-        { "action": "BLOCK", "gcid": "19bcc2d4-d1e5-4ffe-894c-7edee1f39ce2"}
+        { 
+            "action": "BLOCK",
+            "options": {"gcid": "22bcc2d4-d1e5-4ffe-894c-7edee1f39ce2"}
+        }
     ],
     "validation": {
         "target": "DPP-BLOCKED",
-        "gcid": "19bcc2d4-d1e5-4ffe-894c-7edee1f39ce2",
+        "options": {"gcid": "22bcc2d4-d1e5-4ffe-894c-7edee1f39ce2"},
         "expectation": {"field": "status", "value": "BLOCKED"}
     }
 }

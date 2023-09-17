@@ -1,7 +1,10 @@
 {
     "name": "Unblock user with invalid gcid",
     "actions": [
-        { "action": "UNBLOCK", "body": "{\"AccountActivation\":{\"gcid\": \"invalid\"}}" }
+        { 
+            "action": "UNBLOCK", 
+            "options": {"body": "{\"AccountActivation\":{\"gcid\": \"invalid\"}}"}
+        }
     ],
     "validation": {
         "target": "DPP-KAFKA-CONSUMER",
