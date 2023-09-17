@@ -1,0 +1,11 @@
+{
+    "name": "Unblock user with invalid account activation",
+    "actions": [
+        { "action": "UNBLOCK", "body": "{\"AccountActivation\":{\"invalid message\"}}" }
+    ],
+    "validation": {
+        "target": "DPP-KAFKA-CONSUMER",
+        "wait": 1,
+        "expectation": { "status-code": 200 }
+    }
+}

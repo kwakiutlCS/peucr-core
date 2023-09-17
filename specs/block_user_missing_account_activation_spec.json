@@ -1,0 +1,11 @@
+{
+    "name": "Block user with missing account deletion",
+    "actions": [
+        { "action": "BLOCK", "body": "{\"AccountDeletion\":{}}" }
+    ],
+    "validation": {
+        "target": "DPP-KAFKA-CONSUMER",
+        "wait": 1,
+        "expectation": { "status-code": 200 }
+    }
+}

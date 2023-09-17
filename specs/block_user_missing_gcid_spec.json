@@ -1,0 +1,11 @@
+{
+    "name": "Block user with missing gcid",
+    "actions": [
+        { "action": "BLOCK", "body": "{\"AccountDeletion\":{\"gcid\": \"\", \"event-id\":\"palerma\"}}" }
+    ],
+    "validation": {
+        "target": "DPP-KAFKA-CONSUMER",
+        "wait": 1,
+        "expectation": { "status-code": 200 }
+    }
+}

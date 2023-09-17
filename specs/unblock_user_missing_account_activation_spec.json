@@ -1,0 +1,11 @@
+{
+    "name": "Unblock user with missing account activation",
+    "actions": [
+        { "action": "UNBLOCK", "body": "{\"AccountActivation\":{}}" }
+    ],
+    "validation": {
+        "target": "DPP-KAFKA-CONSUMER",
+        "wait": 1,
+        "expectation": { "status-code": 200 }
+    }
+}
