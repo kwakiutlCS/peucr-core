@@ -1,8 +1,11 @@
 import requests
+from test_plugin import TestPlugin
 
-class KafkaConsumerHealth:
+class KafkaConsumerHealth(TestPlugin):
 
     def __init__(self, config):
+        self.labels = ["DPP-KAFKA-CONSUMER", "KAFKA-CONSUMER"]
+
         if "hostkafka" not in config:
             raise Exception("hostkafka required in config")
 
@@ -14,8 +17,4 @@ class KafkaConsumerHealth:
 
         response = requests.get(url)
 
-        return {"status-code": response.status_code}
-
-
-    def executes(self, label):
-        return label in ["DPP-KAFKA-CONSUMER", "dpp-kafka-consumer",  "KAFKA-CONSUMER", "kafka-consumer"]
+        return {"success": response.status_code == 200}

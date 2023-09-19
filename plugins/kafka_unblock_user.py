@@ -1,8 +1,11 @@
 import requests
+from test_plugin import TestPlugin
 
-class UnblockUser:
+class UnblockUser(TestPlugin):
 
     def __init__(self, config):
+        self.labels = ["UNBLOCK"]
+        
         if "hostbroker" not in config:
             raise Exception("hostbroker required in config")
 
@@ -23,8 +26,4 @@ class UnblockUser:
 
         response = requests.post(url, json=body)
 
-        return {"status-code": response.status_code}
-
-
-    def executes(self, label):
-        return label in ["UNBLOCK", "unblock"]
+        return {"success": response.status_code == 200}

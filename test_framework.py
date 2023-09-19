@@ -1,14 +1,14 @@
-import requests
 import time
 import sys
 
 
 class TestFramework:
-    def __init__(self, plugins, config):
+    def __init__(self, plugins):
         self.plugins = plugins
-        self.config = config
-        self.separator = "**************************"
+        self.separator = "**************************************************"
         
+
+
     def verify_field(self, response, field):
         if not field:
             return {"valid": False, "msg": ""}
@@ -29,58 +29,53 @@ class TestFramework:
         return {"valid": False, "msg": msg}
 
 
-    def verify_fields(self, response, fields):
-        msgs = ""
 
-        for field in fields:
-            verification = self.verify_field(response, field)
-            if verification["valid"]:
-                return verification
+    def verify_code(self, response, code):
+        success = response["status-code"] == code
 
-            msgs += verification["msg"]
-
-        return {"valid": False, "msg": msgs}
+        return {"valid": success, "msg": None if success else "Expected status code to be {}, but got {}. ".format(code, response["status-code"])}
 
 
-    def verify_code(self, response, codes):
-        if not codes:
-            return {"valid": False, "msg": ""}
 
-        success = response["status-code"] in codes
+    def verify_response(self, expectation, response):
+        if expectation is None:
+            return {"valid": response["success"], "msg": ""}
 
-        return {"valid": success, "msg": None if success else "Expected status code to be one of {}, but got {}. ".format(codes, response["status-code"])}
+        if expectation.get("status-code"):
+            return self.verify_code(response, expectation.get("status-code"))
+
+        if expectation.get("field"):
+            return self.verify_field(response, expectation)
+
+        msg = ""
+        if expectation.get("one-of"):
+            for one in expectation["one-of"]:
+                verification = self.verify_response(one, response)
+                if verification["valid"]:
+                    return verification
+                msg += verification["msg"]
+                
+        return {"valid": False, "msg": "{}".format(msg)}
 
 
-    def verify_response(self, response, code, field):
-        codeVerification = self.verify_code(response, code)
-        if codeVerification["valid"]:
-            return {"valid": True}
 
-        fieldVerification = self.verify_fields(response, field)
-        if fieldVerification["valid"]:
-            return {"valid": True}
+    def get_plugin(self, name):
+        executablePlugins = [p for p in self.plugins if p.executes(name)]
+        
+        if len(executablePlugins) == 0:
+            raise Exception("No plugin was found for", name)
 
-        return {"valid": False, "msg": "Failure. {}{}".format(codeVerification["msg"], fieldVerification["msg"])}
+        return executablePlugins[0]
 
 
-    def exec_test(self, spec):
-        print("Executing test \"{}\"".format(spec["name"]))
 
-        actions = spec["actions"]
+    def exec_actions(self, actions):
         if len(actions) == 0:
             print("No action was specified")
             return False
 
-        # action
         for action in actions:
-            name = action["action"]
-            executablePlugins = [p for p in self.plugins if p.executes(name)]
-            
-            if len(executablePlugins) == 0:
-                print("No plugin was found for", name)
-                sys.exit(1)
-
-            plugin = executablePlugins[0]
+            plugin = self.get_plugin(action["action"])
 
             executed = False
             startTime = time.time()
@@ -88,27 +83,25 @@ class TestFramework:
 
             while not executed and time.time() - startTime < 3:
                 r = plugin.apply(options)
-                executed = r["status-code"] == 200
+                executed = r["success"]
                 time.sleep(0.2)
 
         if not executed:
             print("Action failed. Validation will not be executed")
             return False
 
-        # validation
-        name = spec["validation"]["name"]
-        executablePlugins = [p for p in self.plugins if p.executes(name)]
+        return True
 
-        if len(executablePlugins) == 0:
-            print("No plugin was found for", name)
-            sys.exit(1)
-            
-        plugin = executablePlugins[0]
-        fields = spec["validation"].get("fields")
-        statusCodes = spec["validation"].get("status-codes")
-        wait = spec["validation"].get("wait") if spec["validation"].get("wait") else 0
-        duration = spec["validation"].get("duration") if spec["validation"].get("duration") else 5
-        options = spec["validation"].get("options")
+
+
+    def exec_validation(self, validation):
+        plugin = self.get_plugin(validation["target"])
+
+        statusCodes = validation.get("status-codes")
+        options = validation.get("options")
+        wait = validation.get("wait") if validation.get("wait") else 0
+        duration = 1 if validation.get("wait") else 5
+        expectation = validation.get("expectation")
 
         time.sleep(wait)
 
@@ -117,25 +110,35 @@ class TestFramework:
         while not result["valid"] and time.time() - startTime < duration:
             try:
                 response = plugin.apply(options)
-                result = self.verify_response(response, statusCodes, fields)
+                result = self.verify_response(expectation, response)
             except Exception as e:
                 result["msg"] = "Error:", e
 
             time.sleep(0.2)
 
         if not result["valid"]:
-            print(result["msg"])
+            print("Failure.", result["msg"])
 
         return result["valid"]
+
+
+
+    def exec_test(self, spec):
+        print("Executing test \"{}\"".format(spec["name"]))
+
+        success = self.exec_actions(spec["actions"])
+        if not success:
+            return False
+
+        return self.exec_validation(spec["validation"])
+
 
 
     def exec_test_suite(self, specs):
         successes = 0
 
         for spec in specs:
-            print(self.separator)
             if self.exec_test(spec):
-                print("SUCCESS")
                 successes += 1
 
         print(self.separator)
@@ -149,36 +152,15 @@ class TestFramework:
 
 
     def verify_preconditions(self, validations):
-        print(self.separator)
-        print("Executing preconditions")
+        if validations is None:
+            return
 
         for validation in validations:
-            print("Verifying", validation["name"])
-            executablePlugins = [p for p in self.plugins if p.executes(validation["name"])]
-
-            if len(executablePlugins) == 0:
-                print("No plugin was found for", validation["name"])
-                sys.exit(1)
-
-            plugin = executablePlugins[0]
-
-            fields = validation.get("fields")
-            statusCodes = validation.get("status-codes")
-
-            startTime = time.time()
-            result = {"valid": False}
-            while not result["valid"] and time.time() - startTime < 2:
-                try:
-                    response = plugin.apply()
-                    result = self.verify_response(response, statusCodes, fields)
-                except Exception as e:
-                    time.sleep(0.2)
-             
-            if not result["valid"]:
+            print("Verifying", validation["target"])
+            if not self.exec_validation(validation):
                 print("Precondition validation failed. Test will be aborted")
                 print(self.separator)
                 sys.exit(1)
 
         print("Preconditions confirmed. Test will start")
         print(self.separator)
-        time.sleep(1)

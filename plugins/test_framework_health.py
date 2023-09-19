@@ -1,8 +1,11 @@
 import requests
+from test_plugin import TestPlugin
 
-class TestFrameworkHealth:
+class TestFrameworkHealth(TestPlugin):
 
     def __init__(self, config):
+        self.labels = ["TEST-FRAMEWORK-API"]
+
         if "hostbroker" not in config:
             raise Exception("hostbroker required in config")
 
@@ -14,8 +17,4 @@ class TestFrameworkHealth:
 
         response = requests.get(url)
 
-        return {"status-code": response.status_code}
-
-
-    def executes(self, label):
-        return label in ["TEST-FRAMEWORK-API", "test-framework-api"]
+        return {"success": response.status_code == 200}

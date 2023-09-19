@@ -1,5 +1,5 @@
 [
-    { "target": "DPP-HEALTH", "expectation": {"status-code": 200}},
-    { "target": "DPP-KAFKA-CONSUMER", "expectation": {"status-code": 200}},
-    { "target": "TEST-FRAMEWORK-API", "expectation": {"status-code": 200}}
+    { "target": "DPP-HEALTH"},
+    { "target": "DPP-KAFKA-CONSUMER"},
+    { "target": "TEST-FRAMEWORK-API"}
 ]

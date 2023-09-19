@@ -1,9 +1,12 @@
 import requests
 from requests.auth import HTTPBasicAuth
+from test_plugin import TestPlugin
 
-class DppBlockedStatus:
+class DppBlockedStatus(TestPlugin):
 
     def __init__(self, config):
+        self.labels = ["DPP-BLOCKED"]
+
         if "hostdpp" not in config:
             raise Exception("hostdpp required in config")
         if "usernamedpp" not in config:
@@ -30,7 +33,3 @@ class DppBlockedStatus:
         response = requests.get(url, auth = auth, headers = headers)
 
         return {"status-code": response.status_code, "fields": response.json()}
-
-
-    def executes(self, label):
-        return label in ["DPP-BLOCKED", "dpp-blocked"]

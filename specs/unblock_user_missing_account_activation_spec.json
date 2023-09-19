@@ -8,7 +8,6 @@
     ],
     "validation": {
         "target": "DPP-KAFKA-CONSUMER",
-        "wait": 1,
-        "expectation": { "status-code": 200 }
+        "wait": 1
     }
 }

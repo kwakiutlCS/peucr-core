@@ -1,8 +1,11 @@
 import requests
+from test_plugin import TestPlugin
 
-class DppHealth:
+class DppHealth(TestPlugin):
 
     def __init__(self, config):
+        self.labels = ["DPP", "DPP-HEALTH"]
+
         if "hostdpp" not in config:
             raise Exception("hostdpp required in config")
 
@@ -14,8 +17,4 @@ class DppHealth:
 
         response = requests.get(url)
 
-        return {"status-code": response.status_code}
-
-
-    def executes(self, label):
-        return label in ["DPP", "dpp", "Dpp", "DPP_HEALTH", "dpp_health", "DPP-HEALTH", "dpp-health"]
+        return {"success": response.status_code == 200}
