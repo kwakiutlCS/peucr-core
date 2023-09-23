@@ -6,9 +6,9 @@
             "options": {"gcid": "22bcc2d4-d1e5-4ffe-894c-7edee1f39ce2"}
         }
     ],
-    "validation": {
+    "validation": [{
         "target": "DPP-BLOCKED",
         "options": {"gcid": "22bcc2d4-d1e5-4ffe-894c-7edee1f39ce2"},
         "expectation": {"field": "status", "value": "BLOCKED"}
-    }
+    }]
 }

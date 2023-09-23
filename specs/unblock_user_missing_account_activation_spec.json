@@ -6,8 +6,8 @@
             "options": {"body": "{\"AccountActivation\":{}}"}
         }
     ],
-    "validation": {
+    "validation": [{
         "target": "DPP-KAFKA-CONSUMER",
         "wait": 1
-    }
+    }]
 }

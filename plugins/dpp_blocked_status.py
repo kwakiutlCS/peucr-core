@@ -32,4 +32,4 @@ class DppBlockedStatus(TestPlugin):
 
         response = requests.get(url, auth = auth, headers = headers)
 
-        return {"status-code": response.status_code, "fields": response.json()}
+        return {"status": response.status_code, "fields": response.json()}

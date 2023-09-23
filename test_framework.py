@@ -31,9 +31,9 @@ class TestFramework:
 
 
     def verify_code(self, response, code):
-        success = response["status-code"] == code
+        success = response["status"] == code
 
-        return {"valid": success, "msg": None if success else "Expected status code to be {}, but got {}. ".format(code, response["status-code"])}
+        return {"valid": success, "msg": None if success else "Expected status code to be {}, but got {}. ".format(code, response["status"])}
 
 
 
@@ -41,8 +41,8 @@ class TestFramework:
         if expectation is None:
             return {"valid": response["success"], "msg": ""}
 
-        if expectation.get("status-code"):
-            return self.verify_code(response, expectation.get("status-code"))
+        if expectation.get("status"):
+            return self.verify_code(response, expectation.get("status"))
 
         if expectation.get("field"):
             return self.verify_field(response, expectation)
@@ -97,7 +97,6 @@ class TestFramework:
     def exec_validation(self, validation):
         plugin = self.get_plugin(validation["target"])
 
-        statusCodes = validation.get("status-codes")
         options = validation.get("options")
         wait = validation.get("wait") if validation.get("wait") else 0
         duration = 1 if validation.get("wait") else 5
@@ -130,7 +129,11 @@ class TestFramework:
         if not success:
             return False
 
-        return self.exec_validation(spec["validation"])
+        for validation in spec["validation"]:
+            if not self.exec_validation(validation):
+                return False
+
+        return True
 
 
 
@@ -152,10 +155,10 @@ class TestFramework:
 
 
     def exec_preconditions(self, validations):
-        if validations is None:
+        if validations["validation"] is None:
             return
 
-        for validation in validations:
+        for validation in validations["validation"]:
             print("Verifying", validation["target"])
             if not self.exec_validation(validation):
                 print("Precondition validation failed. Test will be aborted")

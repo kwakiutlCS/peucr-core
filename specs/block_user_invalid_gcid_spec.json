@@ -6,8 +6,8 @@
             "options": {"body": "{\"AccountDeletion\":{\"gcid\": \"invalid\"}}"}
         }
     ],
-    "validation": {
+    "validation": [{
         "target": "DPP-KAFKA-CONSUMER",
         "wait": 1
-    }
+    }]
 }

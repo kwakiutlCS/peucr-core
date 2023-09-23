@@ -10,14 +10,14 @@
             "options": {"gcid": "1ead32ab-1529-4b08-a04b-5760ed66f2c2"}
         }
     ],
-    "validation": {
+    "validation": [{
         "target": "DPP-BLOCKED",
         "options": {"gcid": "1ead32ab-1529-4b08-a04b-5760ed66f2c2"},
         "expectation": {
             "one-of": [
                 {"field": "status", "value": "NOT_BLOCKED"},
-                {"status-code": 404}
+                {"status": 404}
             ]
         }
-    }
+    }]
 }
