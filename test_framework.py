@@ -151,7 +151,7 @@ class TestFramework:
 
 
 
-    def verify_preconditions(self, validations):
+    def exec_preconditions(self, validations):
         if validations is None:
             return
 
