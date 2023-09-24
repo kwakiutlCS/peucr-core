@@ -1,7 +1,0 @@
-{
-    "validation": [
-        { "target": "DPP-HEALTH"},
-        { "target": "DPP-KAFKA-CONSUMER"},
-        { "target": "TEST-FRAMEWORK-API"}
-    ]
-}

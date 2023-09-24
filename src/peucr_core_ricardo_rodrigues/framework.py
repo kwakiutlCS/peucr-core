@@ -1,30 +1,33 @@
 import time
 import sys
+from peucr_core_ricardo_rodrigues.loaders import ConfigLoader, SpecLoader, PluginLoader
 
 
 class TestFramework:
-    def __init__(self, plugins):
-        self.plugins = plugins
+    def __init__(self, args):
         self.separator = "**************************************************"
-        
+        self.config = ConfigLoader(args).apply()
+        self.specs = SpecLoader(self.config).apply()
+        self.plugins = PluginLoader(self.config).apply()
+
 
 
     def verify_field(self, response, field):
         if not field:
             return {"valid": False, "msg": ""}
 
-        fields = response["fields"]
+        entity = response["entity"]
 
         key = field.get("field")
         value = field.get("value")
 
-        if not fields.get(key):
+        if not entity.get(key):
             msg = "Expected {} to be {}, but it is not present. ".format(key, value)
         else:
-            if value == fields.get(key):
+            if value == entity.get(key):
                 return {"valid": True}
 
-            msg = "Expected {} to be {}, but got {}. ".format(key, value, fields.get(key))
+            msg = "Expected {} to be {}, but got {}. ".format(key, value, entity.get(key))
 
         return {"valid": False, "msg": msg}
 
@@ -60,22 +63,26 @@ class TestFramework:
 
 
     def get_plugin(self, name):
-        executablePlugins = [p for p in self.plugins if p.executes(name)]
+        executablePlugins = [p for p in self.plugins["custom"] if p.executes(name)]
         
-        if len(executablePlugins) == 0:
-            raise Exception("No plugin was found for", name)
+        if len(executablePlugins) > 0:
+            return executablePlugins[0]
 
-        return executablePlugins[0]
+        executablePlugins = [p for p in self.plugins["default"] if p.executes(name)]
+        
+        if len(executablePlugins) > 0:
+            return executablePlugins[0]
+
+        raise Exception("No plugin was found for", name)
 
 
 
     def exec_actions(self, actions):
-        if len(actions) == 0:
-            print("No action was specified")
-            return False
+        if actions is None or len(actions) == 0:
+            return True
 
         for action in actions:
-            plugin = self.get_plugin(action["action"])
+            plugin = self.get_plugin(action["target"])
 
             executed = False
             startTime = time.time()
@@ -122,18 +129,29 @@ class TestFramework:
 
 
 
-    def exec_test(self, spec):
-        print("Executing test \"{}\"".format(spec["name"]))
-
-        success = self.exec_actions(spec["actions"])
-        if not success:
+    def exec_validations(self, validations):
+        if not validations or len(validations) == 0:
+            print("No validation specified in test. Aborting.")
             return False
 
-        for validation in spec["validation"]:
+        for validation in validations:
             if not self.exec_validation(validation):
                 return False
 
         return True
+
+
+
+    def exec_test(self, spec):
+        print("Executing test \"{}\"".format(spec["name"] if spec.get("name") else "UNNAMED"))
+
+        if not self.exec_actions(spec.get("context")):
+            return False
+
+        if not self.exec_actions(spec.get("actions")):
+            return False
+
+        return self.exec_validations(spec.get("validation"))
 
 
 
@@ -155,11 +173,11 @@ class TestFramework:
 
 
     def exec_preconditions(self, validations):
-        if validations["validation"] is None:
+        if validations is None or validations.get("validation") is None:
             return
 
         for validation in validations["validation"]:
-            print("Verifying", validation["target"])
+            print("Verifying", (validation["name"] if validation.get("name") else "UNNAMED"))
             if not self.exec_validation(validation):
                 print("Precondition validation failed. Test will be aborted")
                 print(self.separator)
@@ -167,3 +185,9 @@ class TestFramework:
 
         print("Preconditions confirmed. Test will start")
         print(self.separator)
+
+
+
+    def exec(self):
+        self.exec_preconditions(self.specs.get("preconditions"))
+        self.exec_test_suite(self.specs.get("execution"))
