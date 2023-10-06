@@ -4,6 +4,7 @@ import inspect
 import importlib
 import json
 from peucr_core_ricardo_rodrigues.plugins.http import HttpPlugin
+from peucr_core_ricardo_rodrigues.validatorsuite import ValidatorSuite
 
 
 class ConfigLoader:
@@ -21,6 +22,9 @@ class ConfigLoader:
 
         if not self.get(self.args, "specs"):
             config["specs"] = "specs"
+
+        if not self.get(self.args, "validators"):
+            config["validators"] = "validators"
 
         for index in range(len(self.args)):
             if self.is_flag(self.args, index):
@@ -53,7 +57,7 @@ class ConfigLoader:
 class PluginLoader:
 
     def __init__(self, config):
-        self.plugin = "TestPlugin"
+        self.plugin = "testValidator"
         self.config = config
 
 
@@ -66,16 +70,17 @@ class PluginLoader:
 
         plugins = []
 
-        for file in os.listdir(path):
-            try:
-                lib = importlib.import_module(parentModule+"."+file.split(".")[0])
-            except Exception as e:
-                print(e)
-                sys.exit(1)
+        if os.path.exists(path):
+            for file in os.listdir(path):
+                try:
+                    lib = importlib.import_module(parentModule+"."+file.split(".")[0])
+                except Exception as e:
+                    print(e)
+                    sys.exit(1)
+                    
+                members = inspect.getmembers(lib, inspect.isclass)
                 
-            members = inspect.getmembers(lib, inspect.isclass)
-            
-            plugins.append(self.getTestPlugin(members, parentModule, lib))
+                plugins.append(self.getTestPlugin(members, parentModule, lib))
             
         return {"custom": [plugin(self.config) for plugin in plugins if plugin is not None],
                 "default": self.getDefaultPlugins()}
@@ -88,18 +93,18 @@ class PluginLoader:
 
     
     def getTestPlugin(self, member, parent, lib):
-        testClass = None
-        testPlugin = False
+        validatorClass = None
+        testValidator = False
 
         for clazz in member:
             if clazz[0] == self.plugin:
-                testPlugin = True
+                testValidator = True
 
             if parent+"." in str(clazz[1]):
-                testClass = clazz[0]
+                validatorClass = clazz[0]
 
-        if testPlugin and testClass:
-            return getattr(lib, testClass)
+        if testValidator and validatorClass:
+            return getattr(lib, validatorClass)
 
 
 
@@ -110,7 +115,7 @@ class SpecLoader:
         self.preconditions = "preconditions.json"
         self.config = config
 
-    def apply(self, ):
+    def apply(self):
         path = self.config["specs"]
 
         specs = {}
@@ -138,3 +143,50 @@ class SpecLoader:
         specs["execution"] = execution
 
         return specs
+
+
+
+class ValidatorLoader:
+
+    def __init__(self, config):
+        self.validator = "TestValidator"
+        self.config = config
+
+
+    def apply(self):
+        path = self.config["validators"]
+
+        if path[-1] == "/":
+            path = path[0:-1]
+        parentModule = path.split("/")[-1]
+
+        validators = []
+
+        if os.path.exists(path):
+            for file in os.listdir(path):
+                try:
+                    lib = importlib.import_module(parentModule+"."+file.split(".")[0])
+                except Exception as e:
+                    print(e)
+                    sys.exit(1)
+                    
+                members = inspect.getmembers(lib, inspect.isclass)
+                
+                validators.append(self.getValidator(members, parentModule, lib))
+            
+        return ValidatorSuite([validator() for validator in validators if validator is not None])
+
+    
+    def getValidator(self, member, parent, lib):
+        validatorClass = None
+        testValidator = False
+
+        for clazz in member:
+            if clazz[0] == self.validator:
+                testValidator = True
+
+            if parent+"." in str(clazz[1]):
+                validatorClass = clazz[0]
+
+        if testValidator and validatorClass:
+            return getattr(lib, validatorClass)

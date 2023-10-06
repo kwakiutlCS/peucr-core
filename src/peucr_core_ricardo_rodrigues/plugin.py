@@ -4,11 +4,14 @@ class TestPlugin:
 
     def __init__(self):
         self.labels = []
+        self.config = {}
+
 
     def executes(self, name):
         return name.upper() in [l.upper() for l in self.labels]
 
-    def configure(self, value, config):
+
+    def configure(self, value):
         pattern = r"\$\{([^}]+)\}"
 
         m = re.search(pattern, value)
@@ -17,7 +20,7 @@ class TestPlugin:
             return value
 
         for key in m.groups():
-            if config.get(key):
-                value = value.replace("${" + key + "}", config[key])
+            if self.config.get(key):
+                value = value.replace("${" + key + "}", self.config[key])
         
         return value

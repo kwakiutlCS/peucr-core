@@ -9,8 +9,8 @@ class HttpPlugin(TestPlugin):
 
 
     def apply(self, options = {}):
-        url = self.configure(options.get("url"), self.config)
+        url = self.configure(options.get("url"))
 
         response = requests.get(url)
 
-        return {"success": response.status_code >= 200 and response.status_code < 300}
+        return {"success": response.status_code >= 200 and response.status_code < 300, "status-code": response.status_code}

@@ -1,64 +1,17 @@
 import time
 import sys
-from peucr_core_ricardo_rodrigues.loaders import ConfigLoader, SpecLoader, PluginLoader
+from peucr_core_ricardo_rodrigues.loaders import ConfigLoader, SpecLoader, PluginLoader, ValidatorLoader
+from peucr_core_ricardo_rodrigues.exceptions import InvalidDefinitionException
 
 
 class TestFramework:
     def __init__(self, args):
         self.separator = "**************************************************"
+        self.retryInterval = 0.2
         self.config = ConfigLoader(args).apply()
         self.specs = SpecLoader(self.config).apply()
         self.plugins = PluginLoader(self.config).apply()
-
-
-
-    def verify_field(self, response, field):
-        if not field:
-            return {"valid": False, "msg": ""}
-
-        entity = response["entity"]
-
-        key = field.get("field")
-        value = field.get("value")
-
-        if not entity.get(key):
-            msg = "Expected {} to be {}, but it is not present. ".format(key, value)
-        else:
-            if value == entity.get(key):
-                return {"valid": True}
-
-            msg = "Expected {} to be {}, but got {}. ".format(key, value, entity.get(key))
-
-        return {"valid": False, "msg": msg}
-
-
-
-    def verify_code(self, response, code):
-        success = response["status"] == code
-
-        return {"valid": success, "msg": None if success else "Expected status code to be {}, but got {}. ".format(code, response["status"])}
-
-
-
-    def verify_response(self, expectation, response):
-        if expectation is None:
-            return {"valid": response["success"], "msg": ""}
-
-        if expectation.get("status"):
-            return self.verify_code(response, expectation.get("status"))
-
-        if expectation.get("field"):
-            return self.verify_field(response, expectation)
-
-        msg = ""
-        if expectation.get("one-of"):
-            for one in expectation["one-of"]:
-                verification = self.verify_response(one, response)
-                if verification["valid"]:
-                    return verification
-                msg += verification["msg"]
-                
-        return {"valid": False, "msg": "{}".format(msg)}
+        self.validators = ValidatorLoader(self.config).apply()
 
 
 
@@ -88,10 +41,10 @@ class TestFramework:
             startTime = time.time()
             options = action["options"] if action.get("options") else {}
 
-            while not executed and time.time() - startTime < 3:
+            while not executed and time.time() - startTime < 2:
                 r = plugin.apply(options)
                 executed = r["success"]
-                time.sleep(0.2)
+                time.sleep(self.retryInterval)
 
         if not executed:
             print("Action failed. Validation will not be executed")
@@ -106,26 +59,32 @@ class TestFramework:
 
         options = validation.get("options")
         wait = validation.get("wait") if validation.get("wait") else 0
-        duration = 1 if validation.get("wait") else 5
+        attempts = 1 if not validation.get("duration") else max(5, validation["duration"]) / self.retryInterval
         expectation = validation.get("expectation")
 
         time.sleep(wait)
 
-        startTime = time.time()
-        result = {"valid": False}
-        while not result["valid"] and time.time() - startTime < duration:
+        result = {"success": False}
+        counter = 0
+        while not result["success"] and counter < attempts:
             try:
                 response = plugin.apply(options)
-                result = self.verify_response(expectation, response)
+                result = self.validators.apply(expectation, response)
+
+            except InvalidDefinitionException as e:
+                result["msg"] = e
+                break
+
             except Exception as e:
                 result["msg"] = "Error:", e
 
-            time.sleep(0.2)
+            time.sleep(self.retryInterval)
+            counter += 1
 
-        if not result["valid"]:
+        if not result["success"]:
             print("Failure.", result["msg"])
 
-        return result["valid"]
+        return result["success"]
 
 
 
@@ -183,7 +142,6 @@ class TestFramework:
                 print(self.separator)
                 sys.exit(1)
 
-        print("Preconditions confirmed. Test will start")
         print(self.separator)
 
 
