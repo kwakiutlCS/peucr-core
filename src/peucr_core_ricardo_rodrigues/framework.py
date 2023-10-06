@@ -15,35 +15,21 @@ class TestFramework:
 
 
 
-    def get_plugin(self, name):
-        executablePlugins = [p for p in self.plugins["custom"] if p.executes(name)]
-        
-        if len(executablePlugins) > 0:
-            return executablePlugins[0]
-
-        executablePlugins = [p for p in self.plugins["default"] if p.executes(name)]
-        
-        if len(executablePlugins) > 0:
-            return executablePlugins[0]
-
-        raise Exception("No plugin was found for", name)
-
-
-
     def exec_actions(self, actions):
         if actions is None or len(actions) == 0:
             return True
 
         for action in actions:
-            plugin = self.get_plugin(action["target"])
-
             executed = False
             startTime = time.time()
-            options = action["options"] if action.get("options") else {}
 
             while not executed and time.time() - startTime < 2:
-                r = plugin.apply(options)
+                r = self.plugins.apply(action)
                 executed = r["success"]
+
+                if executed:
+                    break
+
                 time.sleep(self.retryInterval)
 
         if not executed:
@@ -55,21 +41,16 @@ class TestFramework:
 
 
     def exec_validation(self, validation):
-        plugin = self.get_plugin(validation["target"])
+        time.sleep(validation.get("wait", 0))
 
-        options = validation.get("options")
-        wait = validation.get("wait") if validation.get("wait") else 0
-        attempts = 1 if not validation.get("duration") else max(5, validation["duration"]) / self.retryInterval
-        expectation = validation.get("expectation")
-
-        time.sleep(wait)
-
-        result = {"success": False}
+        attempts = min(5, validation.get("duration", self.retryInterval)) / self.retryInterval
         counter = 0
+        result = {"success": False}
+
         while not result["success"] and counter < attempts:
             try:
-                response = plugin.apply(options)
-                result = self.validators.apply(expectation, response)
+                response = self.plugins.apply(validation)
+                result = self.validators.apply(validation.get("expectation"), response)
 
             except InvalidDefinitionException as e:
                 result["msg"] = e
@@ -77,6 +58,9 @@ class TestFramework:
 
             except Exception as e:
                 result["msg"] = "Error:", e
+
+            if result["success"]:
+                break
 
             time.sleep(self.retryInterval)
             counter += 1
@@ -89,7 +73,7 @@ class TestFramework:
 
 
     def exec_validations(self, validations):
-        if not validations or len(validations) == 0:
+        if not validations or not isinstance(validations, list) or len(validations) == 0:
             print("No validation specified in test. Aborting.")
             return False
 
@@ -102,7 +86,7 @@ class TestFramework:
 
 
     def exec_test(self, spec):
-        print("Executing test \"{}\"".format(spec["name"] if spec.get("name") else "UNNAMED"))
+        print("Executing test \"{}\"".format(spec.get("name", "UNNAMED")))
 
         if not self.exec_actions(spec.get("context")):
             return False
@@ -136,10 +120,9 @@ class TestFramework:
             return
 
         for validation in validations["validation"]:
-            print("Verifying", (validation["name"] if validation.get("name") else "UNNAMED"))
+            print("Verifying", validation.get("name", "UNNAMED"))
             if not self.exec_validation(validation):
                 print("Precondition validation failed. Test will be aborted")
-                print(self.separator)
                 sys.exit(1)
 
         print(self.separator)

@@ -3,8 +3,8 @@ import os
 import inspect
 import importlib
 import json
-from peucr_core_ricardo_rodrigues.plugins.http import HttpPlugin
 from peucr_core_ricardo_rodrigues.validatorsuite import ValidatorSuite
+from peucr_core_ricardo_rodrigues.pluginsuite import PluginSuite
 
 
 class ConfigLoader:
@@ -57,7 +57,7 @@ class ConfigLoader:
 class PluginLoader:
 
     def __init__(self, config):
-        self.plugin = "testValidator"
+        self.plugin = "TestPlugin"
         self.config = config
 
 
@@ -82,29 +82,22 @@ class PluginLoader:
                 
                 plugins.append(self.getTestPlugin(members, parentModule, lib))
             
-        return {"custom": [plugin(self.config) for plugin in plugins if plugin is not None],
-                "default": self.getDefaultPlugins()}
+        return PluginSuite([plugin(self.config) for plugin in plugins if plugin is not None], self.config)
 
 
-    def getDefaultPlugins(self):
-        return [
-            HttpPlugin(self.config)
-        ]
-
-    
     def getTestPlugin(self, member, parent, lib):
-        validatorClass = None
-        testValidator = False
+        pluginClass = None
+        testPlugin = False
 
         for clazz in member:
             if clazz[0] == self.plugin:
-                testValidator = True
+                testPlugin = True
 
             if parent+"." in str(clazz[1]):
-                validatorClass = clazz[0]
+                pluginClass = clazz[0]
 
-        if testValidator and validatorClass:
-            return getattr(lib, validatorClass)
+        if testPlugin and pluginClass:
+            return getattr(lib, pluginClass)
 
 
 
