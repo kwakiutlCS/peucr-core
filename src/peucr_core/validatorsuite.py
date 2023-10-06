@@ -1,8 +1,8 @@
-from peucr_core_ricardo_rodrigues.validators.default import DefaultValidator
-from peucr_core_ricardo_rodrigues.validators.status import StatusValidator
-from peucr_core_ricardo_rodrigues.validators.json import JsonValidator
-from peucr_core_ricardo_rodrigues.validators.oneof import OneOfValidator
-from peucr_core_ricardo_rodrigues.exceptions import InvalidDefinitionException
+from peucr_core.validators.default import DefaultValidator
+from peucr_core.validators.status import StatusValidator
+from peucr_core.validators.json import JsonValidator
+from peucr_core.validators.oneof import OneOfValidator
+from peucr_core.exceptions import InvalidDefinitionException
 
 
 class ValidatorSuite:

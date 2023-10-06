@@ -3,8 +3,8 @@ import os
 import inspect
 import importlib
 import json
-from peucr_core_ricardo_rodrigues.validatorsuite import ValidatorSuite
-from peucr_core_ricardo_rodrigues.pluginsuite import PluginSuite
+from peucr_core.validatorsuite import ValidatorSuite
+from peucr_core.pluginsuite import PluginSuite
 
 
 class ConfigLoader:

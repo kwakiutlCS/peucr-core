@@ -1,5 +1,5 @@
-from peucr_core_ricardo_rodrigues.plugins.http import HttpPlugin
-from peucr_core_ricardo_rodrigues.exceptions import InvalidDefinitionException
+from peucr_core.plugins.http import HttpPlugin
+from peucr_core.exceptions import InvalidDefinitionException
 
 
 class PluginSuite:

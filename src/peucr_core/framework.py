@@ -1,7 +1,7 @@
 import time
 import sys
-from peucr_core_ricardo_rodrigues.loaders import ConfigLoader, SpecLoader, PluginLoader, ValidatorLoader
-from peucr_core_ricardo_rodrigues.exceptions import InvalidDefinitionException
+from peucr_core.loaders import ConfigLoader, SpecLoader, PluginLoader, ValidatorLoader
+from peucr_core.exceptions import InvalidDefinitionException
 
 
 class TestFramework:

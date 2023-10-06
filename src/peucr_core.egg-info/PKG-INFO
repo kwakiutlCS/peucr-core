@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
-Name: peucr-core-ricardo-rodrigues
-Version: 0.3.11
+Name: peucr-core
+Version: 0.1.0
 Summary: Plain extensible unified code requirement
 Author-email: Ricardo Rodrigues <ricardo.rodrigues@proton.me>
 Classifier: Programming Language :: Python :: 3

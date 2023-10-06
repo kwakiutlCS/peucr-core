@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "peucr_core_ricardo_rodrigues"
-version = "0.3.11"
+name = "peucr_core"
+version = "0.1.1"
 authors = [
   { name="Ricardo Rodrigues", email="ricardo.rodrigues@proton.me" },
 ]

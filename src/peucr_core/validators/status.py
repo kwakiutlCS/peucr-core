@@ -1,5 +1,5 @@
 import requests
-from peucr_core_ricardo_rodrigues.validator import TestValidator
+from peucr_core.validator import TestValidator
 
 class StatusValidator(TestValidator):
 

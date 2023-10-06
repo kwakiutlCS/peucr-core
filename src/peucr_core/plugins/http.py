@@ -1,5 +1,5 @@
 import requests
-from peucr_core_ricardo_rodrigues.plugin import TestPlugin
+from peucr_core.plugin import TestPlugin
 
 class HttpPlugin(TestPlugin):
 
