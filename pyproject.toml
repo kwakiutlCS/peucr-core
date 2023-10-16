@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "peucr_core"
-version = "0.1.1"
+version = "0.1.3"
 authors = [
   { name="Ricardo Rodrigues", email="ricardo.rodrigues@proton.me" },
 ]

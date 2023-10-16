@@ -24,8 +24,11 @@ class TestFramework:
             startTime = time.time()
 
             while not executed and time.time() - startTime < 2:
-                r = self.plugins.apply(action)
-                executed = r["success"]
+                try:
+                    r = self.plugins.apply(action)
+                    executed = r["success"]
+                except Exception as e:
+                    pass
 
                 if executed:
                     break
@@ -66,7 +69,7 @@ class TestFramework:
             counter += 1
 
         if not result["success"]:
-            print("Failure.", result["msg"])
+            print("Failure.", result.get("msg", ""))
 
         return result["success"]
 

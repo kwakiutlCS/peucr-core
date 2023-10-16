@@ -13,4 +13,8 @@ class HttpPlugin(TestPlugin):
 
         response = requests.get(url)
 
-        return {"success": response.status_code >= 200 and response.status_code < 300, "status-code": response.status_code}
+        success = response.status_code >= 200 and response.status_code < 300
+
+        error = "Received status code {}".format(response.status_code) if not success else ""
+
+        return {"success": success, "status-code": response.status_code, msg: error}
