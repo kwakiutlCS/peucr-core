@@ -17,4 +17,4 @@ class HttpPlugin(TestPlugin):
 
         error = "Received status code {}".format(response.status_code) if not success else ""
 
-        return {"success": success, "status-code": response.status_code, msg: error}
+        return {"success": success, "status-code": response.status_code, "msg": error}
