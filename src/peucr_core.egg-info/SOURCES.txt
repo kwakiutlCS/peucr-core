@@ -15,6 +15,9 @@ src/peucr_core.egg-info/dependency_links.txt
 src/peucr_core.egg-info/top_level.txt
 src/peucr_core/plugins/__init__.py
 src/peucr_core/plugins/http.py
+src/peucr_core/plugins/sqs_purge.py
+src/peucr_core/plugins/sqs_receive.py
+src/peucr_core/plugins/sqs_send.py
 src/peucr_core/validators/__init__.py
 src/peucr_core/validators/default.py
 src/peucr_core/validators/json.py

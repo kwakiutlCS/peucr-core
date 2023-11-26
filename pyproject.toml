@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "peucr_core"
-version = "0.1.4"
+version = "0.2.0"
 authors = [
-  { name="Ricardo Rodrigues", email="ricardo.rodrigues@proton.me" },
+  { name="Ricardo Rodrigues", email="rsrodrigues@proton.me" },
 ]
 description = "Plain extensible unified code requirement"
 readme = "README.md"
@@ -16,3 +16,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+
+[project.urls]
+"Homepage" = "https://github.com/kwakiutlCS/peucr-core"
+"Source" =  "https://github.com/kwakiutlCS/peucr-core"

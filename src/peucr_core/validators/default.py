@@ -12,4 +12,6 @@ class DefaultValidator(TestValidator):
         if "success" not in response:
             raise InvalidDefinitionException("No \"success\" field in response")
 
-        return {"success": response["success"]}
+        msg = response["msg"] if response.get("msg") else ""
+
+        return {"success": response["success"], "msg": msg}

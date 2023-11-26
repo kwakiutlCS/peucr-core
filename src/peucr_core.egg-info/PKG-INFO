@@ -1,8 +1,10 @@
 Metadata-Version: 2.1
 Name: peucr-core
-Version: 0.1.4
+Version: 0.2.0
 Summary: Plain extensible unified code requirement
-Author-email: Ricardo Rodrigues <ricardo.rodrigues@proton.me>
+Author-email: Ricardo Rodrigues <rsrodrigues@proton.me>
+Project-URL: Homepage, https://github.com/kwakiutlCS/peucr-core
+Project-URL: Source, https://github.com/kwakiutlCS/peucr-core
 Classifier: Programming Language :: Python :: 3
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent

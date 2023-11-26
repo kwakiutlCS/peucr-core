@@ -19,24 +19,26 @@ class TestFramework:
         if actions is None or len(actions) == 0:
             return True
 
+        result = {"success": False}
+
         for action in actions:
-            executed = False
+            result["success"] = False
             startTime = time.time()
 
-            while not executed and time.time() - startTime < 2:
+            while not result["success"] and time.time() - startTime < 2:
                 try:
                     r = self.plugins.apply(action)
-                    executed = r["success"]
+                    result["success"] = r["success"]
                 except Exception as e:
-                    pass
+                    result["msg"] = e
 
-                if executed:
+                if result["success"]:
                     break
 
                 time.sleep(self.retryInterval)
 
-        if not executed:
-            print("Action failed. Validation will not be executed")
+        if not result["success"]:
+            print(result["msg"] if result.get("msg") else "Action failed.", "Validation will not be executed")
             return False
 
         return True

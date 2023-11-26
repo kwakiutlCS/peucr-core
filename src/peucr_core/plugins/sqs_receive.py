@@ -1,0 +1,75 @@
+import boto3
+import json
+import time
+
+from peucr_core.plugin import TestPlugin
+
+class SqsReceive(TestPlugin):
+
+    def __init__(self, config):
+        self.labels = ["SQS-RECEIVE"]
+
+        self.config = config
+
+        self.client = boto3.client('sqs')
+
+
+    def apply(self, options = {}):
+        if "sqsReceiveUrl" not in self.config:
+            raise Exception("sqsReceiveUrl required in config")
+
+        messageLimit = options["messageLimit"] if options.get("messageLimit") else 10
+        duration = options["duration"] if options.get("duration") else 10
+        filter = options["filter"] if options.get("filter") else {}
+
+        messages, receipts = self.getMessages(messageLimit, filter, duration)
+        self.deleteMessages(receipts)
+
+        success = len(messages) == messageLimit
+        msg = None if success else "{:d} messages received, but {:d} were expected".format(len(messages), messageLimit)
+        
+        return {"success": success, "msg": msg, "json": messages}
+
+
+    def getMessages(self, limit, filter, duration):
+        messages = {}
+        start_time = time.time()
+
+        while len(messages) < limit and time.time() < start_time + duration:
+            try:
+                response = self.client.receive_message(
+                        QueueUrl = self.config["sqsReceiveUrl"],
+                        MaxNumberOfMessages = limit,
+                        WaitTimeSeconds = 2,
+                        VisibilityTimeout = 0
+                )
+
+            except Exception as e:
+                pass
+
+            for m in response.get("Messages", []):
+                body = json.loads(m["Body"])
+
+                if self.isValid(body, filter):
+                    messages[m["MessageId"]] = (body, m["ReceiptHandle"]) 
+
+        return (list(m[0] for m in messages.values()), list(m[1] for m in messages.values()))
+
+
+    def isValid(self, message, filter):
+        for f in filter.keys():
+            if f not in message:
+                return False
+
+            if message[f] != filter[f]:
+                return False
+
+        return True
+
+
+    def deleteMessages(self, messages):
+        for m in messages:
+            self.client.delete_message(
+                    QueueUrl = self.config["sqsReceiveUrl"],
+                    ReceiptHandle = m
+            )
