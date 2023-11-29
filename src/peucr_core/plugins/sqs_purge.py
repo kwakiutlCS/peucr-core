@@ -11,15 +11,15 @@ class SqsPurge(TestPlugin):
 
         self.config = config
 
-        self.client = boto3.client('sqs')
-
 
     def apply(self, options = {}):
+        client = boto3.client('sqs') if "region" not in options else boto3.client('sqs', region_name=options["region"])
+
         if "url" not in options:
             raise Exception("url required in options")
 
         try:
-            self.client.purge_queue(
+            client.purge_queue(
                     QueueUrl = self.configure(options["url"])
             )
 

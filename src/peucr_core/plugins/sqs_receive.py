@@ -11,10 +11,10 @@ class SqsReceive(TestPlugin):
 
         self.config = config
 
-        self.client = boto3.client('sqs')
-
 
     def apply(self, options = {}):
+        self.client = boto3.client('sqs') if "region" not in options else boto3.client('sqs', region_name=options["region"])
+        
         if "sqsReceiveUrl" not in self.config:
             raise Exception("sqsReceiveUrl required in config")
 
@@ -44,14 +44,14 @@ class SqsReceive(TestPlugin):
                         VisibilityTimeout = 0
                 )
 
+                for m in response.get("Messages", []):
+                    body = json.loads(m["Body"])
+
+                    if self.isValid(body, filter):
+                        messages[m["MessageId"]] = (body, m["ReceiptHandle"])
+
             except Exception as e:
                 pass
-
-            for m in response.get("Messages", []):
-                body = json.loads(m["Body"])
-
-                if self.isValid(body, filter):
-                    messages[m["MessageId"]] = (body, m["ReceiptHandle"]) 
 
         return (list(m[0] for m in messages.values()), list(m[1] for m in messages.values()))
 

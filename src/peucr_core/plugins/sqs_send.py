@@ -9,10 +9,10 @@ class SqsSend(TestPlugin):
 
         self.config = config
 
-        self.client = boto3.client('sqs')
-
 
     def apply(self, options = {}):
+        client = boto3.client('sqs') if "region" not in options else boto3.client('sqs', region_name=options["region"])
+
         if "sqsSendUrl" not in self.config:
             raise Exception("sqsSendUrl required in config")
 
@@ -25,7 +25,7 @@ class SqsSend(TestPlugin):
         success = False
 
         try:
-            response = self.client.send_message(
+            response = client.send_message(
                 QueueUrl=self.config["sqsSendUrl"],
                 MessageBody=message
             )
