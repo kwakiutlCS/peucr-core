@@ -1,5 +1,6 @@
 import time
 import sys
+import concurrent.futures
 from peucr_core.loaders import ConfigLoader, SpecLoader, PluginLoader, ValidatorLoader
 from peucr_core.exceptions import InvalidDefinitionException
 
@@ -15,37 +16,36 @@ class TestFramework:
 
 
 
-    def exec_actions(self, actions):
-        if actions is None or len(actions) == 0:
-            return True
-
-        result = {"success": False}
+    def exec_actions(self, actions, data):
+        if data["error"] or actions is None or len(actions) == 0:
+            return data
 
         for action in actions:
-            result["success"] = False
+            success = False
             startTime = time.time()
 
-            while not result["success"] and time.time() - startTime < 2:
+            while not success and time.time() - startTime < 2:
                 try:
                     r = self.plugins.apply(action)
-                    result["success"] = r["success"]
-                except Exception as e:
-                    result["msg"] = e
+                    success = r["success"]
 
-                if result["success"]:
+                except Exception as e:
+                    data["error"] = True
+                    data["msg"] = "Action failed.", e
+
+                if success or data["error"]:
                     break
 
                 time.sleep(self.retryInterval)
 
-        if not result["success"]:
-            print(result["msg"] if result.get("msg") else "Action failed.", "Validation will not be executed")
-            return False
-
-        return True
+        return data
 
 
 
-    def exec_validation(self, validation):
+    def exec_validation(self, validation, data):
+        if data["error"]:
+            return data
+
         time.sleep(validation.get("wait", 0))
 
         attempts = min(5, validation.get("duration", self.retryInterval)) / self.retryInterval
@@ -58,11 +58,11 @@ class TestFramework:
                 result = self.validators.apply(validation.get("expectation"), response)
 
             except InvalidDefinitionException as e:
-                result["msg"] = e
+                data["msg"] = e
                 break
 
             except Exception as e:
-                result["msg"] = "Error:", e
+                data["msg"] = "Error:", e
 
             if result["success"]:
                 break
@@ -71,52 +71,68 @@ class TestFramework:
             counter += 1
 
         if not result["success"]:
-            print("Failure.", result.get("msg", ""))
+            data["msg"] = "Failure.", result.get("msg", "")
+            data["error"] = True
 
-        return result["success"]
+        return data
 
 
 
-    def exec_validations(self, validations):
+    def exec_validations(self, validations, data):
+        if data["error"]:
+            return data
+
         if not validations or not isinstance(validations, list) or len(validations) == 0:
-            print("No validation specified in test. Aborting.")
-            return False
+            data["error"] = True
+            data["msg"] = "No validation specified in test. Aborting."
+            return data
 
         for validation in validations:
-            if not self.exec_validation(validation):
-                return False
+            data = self.exec_validation(validation, data)
 
-        return True
+        return data
 
 
 
     def exec_test(self, spec):
-        print("Executing test \"{}\"".format(spec.get("name", "UNNAMED")))
+        data = {"name": spec.get("name", "UNNAMED"), "start": time.time(), "error": False, "type": "test"}
 
-        if not self.exec_actions(spec.get("context")):
-            return False
+        data = self.exec_actions(spec.get("context"), data)
+        data = self.exec_actions(spec.get("actions"), data)
+        data = self.exec_validations(spec.get("validation"), data)
 
-        if not self.exec_actions(spec.get("actions")):
-            return False
+        data["end"] = time.time()
 
-        return self.exec_validations(spec.get("validation"))
+        self.print_report(data)
+        return data
 
 
 
     def exec_test_suite(self, specs):
-        successes = 0
+        if self.config.get("parallel") is True:
+            workers = 5
+        else:
+            try:
+                workers = int(self.config.get("parallel"))
+            except:
+                workers = 1
 
-        for spec in specs:
-            if self.exec_test(spec):
-                successes += 1
+        start = time.time()
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
+            results = executor.map(self.exec_test, specs)
+
+        failures = len([i for i in filter(lambda x: x["error"], results)])
+
+        duration  = time.time() - start
 
         print(self.separator)
 
-        if successes != len(specs):
-            print(len(specs), "tests run", len(specs) - successes, "failures")
+        if failures > 0:
+            print(len(specs), "tests run", failures, "failures - {:.3f}s".format(duration))
             sys.exit(1)        
 
-        print(len(specs), "tests run. No failures.")
+        print("{:d} tests run. No failures - {:.3f}s".format(len(specs), duration))
 
 
 
@@ -125,12 +141,31 @@ class TestFramework:
             return
 
         for validation in validations["validation"]:
-            print("Verifying", validation.get("name", "UNNAMED"))
-            if not self.exec_validation(validation):
-                print("Precondition validation failed. Test will be aborted")
+            data = {"name": validation.get("name", "UNNAMED"), "type": "precondition", "start": time.time(), "error": False}
+
+            data = self.exec_validation(validation, data)
+
+            if data["error"]:
+                data["msg"] = "Precondition validation failed. Test will be aborted"
+
+            data["end"] = time.time()
+
+            self.print_report(data)
+
+            if data["error"]:
                 sys.exit(1)
 
         print(self.separator)
+
+
+    
+    def print_report(self, data):
+        action = "Executed" if data["type"] == "test" else "Verifying"
+
+        print("{:s} {:s} - {:.3f}s".format(action, data["name"], data["end"]-data["start"]))
+
+        if data["error"] and data["msg"]:
+            print(data["msg"])
 
 
 

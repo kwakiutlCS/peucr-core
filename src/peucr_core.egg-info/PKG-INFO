@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: peucr-core
-Version: 0.2.1
+Version: 0.3.0
 Summary: Plain extensible unified code requirement
 Author-email: Ricardo Rodrigues <rsrodrigues@proton.me>
 Project-URL: Homepage, https://github.com/kwakiutlCS/peucr-core

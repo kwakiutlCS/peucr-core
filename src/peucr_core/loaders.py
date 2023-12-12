@@ -44,7 +44,7 @@ class ConfigLoader:
         index = args.index(flag)
 
         if len(args) <= index+1 or self.is_flag(args, index+1):
-            return None
+            return True
 
         return args[index+1]
 
